@@ -48,14 +48,14 @@ class RRR_arm_controller:
 class AsyncListener:
 
 
-    async def moveAsync(self):
-        print("Hello asy")
+    async def moveUmbrella(self):
+        print("Umbrella moving into position")
 
         controller = RRR_arm_controller()
 
         rospy.sleep(1.0)
         await controller.to_configuration([1.0,1.0,1.0,0.5])
-        reset = input('Press enter to reset')
+        reset = input('Press enter to reset umbrella')
         await controller.to_configuration([0.0,0.0,0.0,0.0])
 
 
@@ -71,8 +71,6 @@ class AsyncListener:
         print("Connect to " + ipAddress + ":5000")
 
     async def consolePrinter(self, data):
-        print(data)
-        print(type(data))
         jsonData = json.loads(data)
         lightLevel = int(jsonData['Light'])
         if(lightLevel < 40):
@@ -81,7 +79,7 @@ class AsyncListener:
             print('Medium - value: ' + str(lightLevel))
         if(100 < lightLevel):
             print('Bright - value: ' + str(lightLevel))
-
+            await self.moveUmbrella()
 
 
 async def echo(websocket, path):
