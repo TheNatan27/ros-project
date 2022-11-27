@@ -39,7 +39,7 @@ class RRR_arm_controller:
         self.q_curr = np.concatenate((np.array(msg.position[2:6]),
                 np.array(msg.position[6:2])))
 
-    def to_configuration(self, q):
+    async def to_configuration(self, q):
         self.joint_1_pub.publish(Float64(q[0]))
         self.joint_2_pub.publish(Float64(q[1]))
         self.joint_3_pub.publish(Float64(q[2]))
@@ -52,7 +52,7 @@ class AsyncListener:
 
         controller = RRR_arm_controller()
 
-        await rospy.sleep(1.0)
+        rospy.sleep(1.0)
         await controller.to_configuration([1.0,1.0,1.0,0.5])
         reset = input('Press enter to reset')
         await controller.to_configuration([0.0,0.0,0.0,0.0])
@@ -78,5 +78,6 @@ if __name__ ==  '__main__':
 
     loop = asyncio.get_event_loop()
     print(loop.run_until_complete(asl.getIp()))
+    loop.run_until_complete(asl.moveAsync())
 
 
