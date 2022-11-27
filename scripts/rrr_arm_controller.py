@@ -2,14 +2,14 @@ import asyncio
 import websockets
 import socket
 from base64 import b64decode
-import wave
 import json
 import kinpy as kp
 from sensor_msgs.msg import JointState
 import numpy as np
-import math
 import rospy
 from std_msgs.msg import Float64
+
+
 
 class RRR_arm_controller:
     def __init__(self):
@@ -47,6 +47,7 @@ class RRR_arm_controller:
 
 class AsyncListener:
 
+
     async def moveAsync(self):
         print("Hello asy")
 
@@ -67,17 +68,38 @@ class AsyncListener:
             ipAddress = '127.0.0.1'
         finally:
             hostname.close()
-        return ipAddress
+        print("Connect to " + ipAddress + ":5000")
 
+    async def consolePrinter(self, data):
+        print(data)
+        print(type(data))
+        jsonData = json.loads(data)
+        lightLevel = int(jsonData['Light'])
+        if(lightLevel < 40):
+            print('Dark - value: ' + str(lightLevel))
+        if(40 <= lightLevel < 100):
+            print('Medium - value: ' + str(lightLevel))
+        if(100 < lightLevel):
+            print('Bright - value: ' + str(lightLevel))
+
+
+
+async def echo(websocket, path):
+    async for message in websocket:
+
+        if (path == '/lightsensor'):
+            data = await websocket.recv()
+            await asl.consolePrinter(data)
+
+asl = AsyncListener()
+
+loop = asyncio.get_event_loop()
+
+loop.run_until_complete(asl.getIp())
     
+asyncio.get_event_loop().run_until_complete(
+    websockets.serve(echo, '0.0.0.0', 5000, max_size=1_000_000_000))
 
-if __name__ ==  '__main__':
-
-    asl = AsyncListener()
-    print('hello main')
-
-    loop = asyncio.get_event_loop()
-    print(loop.run_until_complete(asl.getIp()))
-    loop.run_until_complete(asl.moveAsync())
+loop.run_forever()
 
 
