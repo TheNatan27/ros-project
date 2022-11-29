@@ -111,7 +111,3 @@ asyncio.get_event_loop().run_until_complete(asl.getIp())
 asyncio.get_event_loop().run_until_complete(
     websockets.serve(echo, '0.0.0.0', 5000))
 asyncio.get_event_loop().run_forever()
-
- 
-
-
