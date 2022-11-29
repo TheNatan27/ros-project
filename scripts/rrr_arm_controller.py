@@ -48,6 +48,9 @@ class RRR_arm_controller:
 class AsyncListener:
 
 
+    def __init__(self):
+        self.umbrellaPosition = "up"
+
     async def moveUmbrella(self):
         print("Umbrella moving into position")
 
@@ -55,9 +58,15 @@ class AsyncListener:
 
         rospy.sleep(1.0)
         await controller.to_configuration([1.0,1.0,1.0,0.5])
-        reset = input('Press enter to reset umbrella')
-        await controller.to_configuration([0.0,0.0,0.0,0.0])
 
+    async def resetUmbrella(self):
+        print("Umbrella moving into default position")
+
+        controller = RRR_arm_controller()
+
+        rospy.sleep(1.0)
+        await controller.to_configuration([0.0,0.0,0.0,0.0])
+        
 
     async def getIp(self):
         hostname = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -73,31 +82,36 @@ class AsyncListener:
     async def consolePrinter(self, data):
         jsonData = json.loads(data)
         lightLevel = int(jsonData['Light'])
+        print(self.umbrellaPosition)
         if(lightLevel < 40):
             print('Dark - value: ' + str(lightLevel))
+            if(self.umbrellaPosition == "down"):
+                await self.resetUmbrella()
+                self.umbrellaPosition = "up"
         if(40 <= lightLevel < 100):
             print('Medium - value: ' + str(lightLevel))
         if(100 < lightLevel):
             print('Bright - value: ' + str(lightLevel))
-            await self.moveUmbrella()
+            if(self.umbrellaPosition == "up"):
+                await self.moveUmbrella()
+                self.umbrellaPosition = "down"
 
 
 async def echo(websocket, path):
     async for message in websocket:
-
-        if (path == '/lightsensor'):
-            data = await websocket.recv()
-            await asl.consolePrinter(data)
+        data = await websocket.recv()
+        await asl.consolePrinter(data)
+            
 
 asl = AsyncListener()
 
-loop = asyncio.get_event_loop()
 
-loop.run_until_complete(asl.getIp())
-    
+asyncio.get_event_loop().run_until_complete(asl.getIp())
+
 asyncio.get_event_loop().run_until_complete(
-    websockets.serve(echo, '0.0.0.0', 5000, max_size=1_000_000_000))
+    websockets.serve(echo, '0.0.0.0', 5000))
+asyncio.get_event_loop().run_forever()
 
-loop.run_forever()
+ 
 
 
